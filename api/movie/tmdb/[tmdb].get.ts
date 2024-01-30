@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { Node } from "../../lib/node";
+import { Node } from "../../../lib/node";
 import z from "zod";
 
 config();
@@ -56,11 +56,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const imdb = data.imdb_id;
-  const params = node.getParams();
-  const redirect = `/api/imdb/${imdb}${params ? "?" + params : ""}`;
+  const redirect = node.buildUrl(`/api/movie/imdb/${imdb}`);
 
   node.setStatusCode(302);
-  node.setHeader("location", redirect);
+  node.setHeader("Location", redirect);
   return {
     status: 302,
     message: `Redirecting to ${redirect}`,

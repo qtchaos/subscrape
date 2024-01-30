@@ -1,4 +1,5 @@
 import ISO6391 from "iso-639-1";
+import { array, z } from "zod";
 
 // Custom codes for languages that don't have an ISO 639-1 code.
 const customCodes = {
@@ -17,10 +18,46 @@ const customNames = {
   "Farsi/Persian": "Persian",
 };
 
-export function getCode(lang: string) {
+export function getCode(lang: string): string {
   return customCodes[lang] ?? ISO6391.getCode(lang);
 }
 
-export function getName(name: string) {
-  return customNames[name] ?? name;
+export function getName(name: string): string {
+  if (customNames[name]) return customNames[name];
+  if (ISO6391.validate(name)) return ISO6391.getName(name);
+  for (const [key, value] of Object.entries(customCodes)) {
+    if (value === name) return key;
+  }
+}
+
+export function getLangFromTitle(title: string): {
+  code: string;
+  name: string;
+} | null {
+  let split = title.split(".");
+  split = split.slice(0, split.length - 1);
+  let lang: string;
+
+  if (split.includes("C")) {
+    lang = split[split.indexOf("C") - 1];
+    if (lang.length === 2) {
+      lang = split[split.indexOf("C") - 2];
+    }
+  } else {
+    split = split.filter((el) => el.length === 2 || el.length === 3);
+    split.forEach((el) => {
+      el = el.slice(0, 2);
+      if (ISO6391.validate(el.slice(0, 2))) {
+        lang = getName(el);
+      }
+    });
+  }
+
+  if (!lang) return null;
+  if (lang.includes("(")) {
+    lang = lang.replaceAll("(", "").replaceAll(")", "");
+  }
+
+  const code = getCode(lang);
+  return { code, name: getName(code) };
 }

@@ -1,12 +1,15 @@
 import * as cheerio from "cheerio";
 import { Logger } from "tslog";
 import z from "zod";
-import { getCode, getName } from "../../lib/lang";
-import { Node } from "../../lib/node";
+import { getCode, getName } from "../../../lib/lang";
+import { Node } from "../../../lib/node";
+
+const baseUrls = ["https://yts-subs.org", "https://yifysubtitles.ch"];
 
 const logger = new Logger({
   name: "imdb",
   type: "pretty",
+  hideLogPositionForProduction: true,
 });
 
 const imdbSchema = z.string().regex(/tt\d{7}/);
@@ -49,7 +52,8 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  const url = `https://yifysubtitles.ch/movie-imdb/${imdb}`;
+  const chosenBaseUrl = baseUrls[Math.floor(Math.random() * baseUrls.length)];
+  const url = `${chosenBaseUrl}/movie-imdb/${imdb}`;
   const yifyPage = await fetch(url);
 
   const $ = cheerio.load(await yifyPage.text());

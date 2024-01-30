@@ -13,6 +13,10 @@ export class Node {
     this.event.node.res.setHeader(key, value);
   }
   getParams() {
-    return this.event.node.req.url.split("?")[1];
+    return "?" + this.event.node.req.url.split("?")[1];
+  }
+  buildUrl(path: string) {
+    const params = this.getParams();
+    return path + params;
   }
 }

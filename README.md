@@ -42,3 +42,4 @@ Some non ISO 639-1 compliant languages, dialects, scripts or encodings might not
 ## Environment Variables
 
 Follow the `.env.example` file to set up your environment variables, you can get a TMDb API key [here](https://www.themoviedb.org/settings/api).
+For the `BETASERIES_API_KEY` variable, you can get an API key [here](https://www.betaseries.com/en/registration/account), then go to the settings, and scroll down till you find "Develop with the API", copy the shorter API key, not the OAuth one.
