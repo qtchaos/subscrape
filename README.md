@@ -42,7 +42,7 @@ Some non ISO 639-1 compliant languages, dialects, scripts or encodings might not
 - `/api/series/tmdb/<tmdb_id>` - Converts TMDb id to IMDb data key and redirects you along with the query parameters.
 - `/api/series/tvdb/<tmdb_id>` - Scrapes subtitles using a TVDb id
 
-  All of these routes return the same success response, which is a list of subtitles with the following format:
+All of these routes return the same success response, which is a list of subtitles with the following format:
 
 ```json
 [
