@@ -1,5 +1,4 @@
 import ISO6391 from "iso-639-1";
-import { array, z } from "zod";
 
 // Custom codes for languages that don't have an ISO 639-1 code.
 const customCodes = {
@@ -28,6 +27,7 @@ export function getName(name: string): string {
   for (const [key, value] of Object.entries(customCodes)) {
     if (value === name) return key;
   }
+  return name;
 }
 
 export function getLangFromTitle(title: string): {
