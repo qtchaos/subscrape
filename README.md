@@ -2,8 +2,8 @@
 
 Scrapes subtitles from `https://yifysubtitles.ch/` using an IMDb or TMDb id.
 
-[!IMPORTANT]
-This project only supports movies, not TV shows, due to the limitations of the website itself.
+> [!IMPORTANT]
+> This project only supports movies, not TV shows, due to the limitations of the website itself.
 
 ## Specification
 
