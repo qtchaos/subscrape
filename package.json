@@ -1,0 +1,23 @@
+{
+  "name": "yifysubtitles",
+  "version": "1.0.0",
+  "author": {
+    "name": "qtchaos",
+    "url": "https://github.com/qtchaos"
+  },
+  "scripts": {
+    "prepare": "nitropack prepare",
+    "dev": "nitropack dev",
+    "build": "nitropack build",
+    "preview": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.1",
+    "iso-639-1": "^3.1.0",
+    "nitropack": "latest",
+    "tslog": "^4.9.2",
+    "zod": "^3.22.4"
+  },
+  "packageManager": "^pnpm@8.15.1"
+}
