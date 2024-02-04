@@ -1,8 +1,8 @@
 import { Node } from "../../../lib/node";
+import { getLangFromTitle } from "../../../lib/lang";
 import z from "zod";
 import { config } from "dotenv";
 import { Logger } from "tslog";
-import { getLangFromTitle } from "../../../lib/lang";
 
 const logger = new Logger({
   name: "show",
@@ -49,12 +49,11 @@ export default defineEventHandler(async (event) => {
   try {
     query = querySchema.parse(rawQuery);
   } catch (error) {
-    node.setStatusCode(400);
-    return {
+    return node.prepareResponse({
       status: 400,
       error: "Bad Request",
       message: error.message,
-    };
+    });
   }
 
   // Get Episode IDs
@@ -80,22 +79,20 @@ export default defineEventHandler(async (event) => {
   try {
     episodeSchema.parse(data);
   } catch (error) {
-    node.setStatusCode(404);
-    return {
+    return node.prepareResponse({
       status: 404,
       error: "Not Found",
       message: "Episode not found.",
-    };
+    });
   }
 
   const { episodes }: z.infer<typeof episodeSchema> = data;
   if (episodes.length === 0) {
-    node.setStatusCode(404);
-    return {
+    return node.prepareResponse({
       status: 404,
       error: "Not Found",
       message: "Episode not found.",
-    };
+    });
   }
 
   const episodeId = episodes[0].id;
@@ -116,12 +113,11 @@ export default defineEventHandler(async (event) => {
   try {
     subtitleSchema.parse(subtitlesData);
   } catch (error) {
-    node.setStatusCode(404);
-    return {
+    return node.prepareResponse({
       status: 404,
       error: "Not Found",
       message: "Subtitles not found.",
-    };
+    });
   }
 
   const rawSubtitles = subtitlesData.subtitles;
@@ -148,9 +144,9 @@ export default defineEventHandler(async (event) => {
   logger.info(
     `Found ${subtitles.length} subtitles for ${tvdb} S${season}E${episode}`
   );
-  node.setStatusCode(200);
-  return {
+
+  return node.prepareResponse({
     count: subtitles.length,
     subtitles,
-  };
+  });
 });

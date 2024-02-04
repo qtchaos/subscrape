@@ -19,24 +19,22 @@ type externalIds = z.infer<typeof externalIdsSchema>;
 export default defineEventHandler(async (event) => {
   const node = new Node(event);
   if (!process.env.TMDB_API_KEY) {
-    node.setStatusCode(500);
-    return {
+    return node.prepareResponse({
       status: 500,
       error: "Internal Server Error",
       message: "Missing TMDB API key.",
-    };
+    });
   }
 
   const tmdb = getRouterParam(event, "tmdb");
   try {
     tmdbSchema.parse(tmdb);
   } catch (error) {
-    node.setStatusCode(500);
-    return {
+    return node.prepareResponse({
       status: 500,
       error: "Internal Server Error",
       message: "Missing or malformed TMDb id.",
-    };
+    });
   }
 
   const res = await fetch(
@@ -47,21 +45,18 @@ export default defineEventHandler(async (event) => {
   try {
     data = externalIdsSchema.parse(data);
   } catch (error) {
-    node.setStatusCode(404);
-    return {
+    return node.prepareResponse({
       status: 404,
       error: "Not Found",
       message: "No corresponding IMDb data key found.",
-    };
+    });
   }
 
   const imdb = data.imdb_id;
   const redirect = node.buildUrl(`/api/movie/imdb/${imdb}`);
 
-  node.setStatusCode(302);
-  node.setHeader("Location", redirect);
-  return {
+  return node.prepareResponse({
     status: 302,
-    message: `Redirecting to ${redirect}`,
-  };
+    redirect,
+  });
 });
