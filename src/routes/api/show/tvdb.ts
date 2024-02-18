@@ -1,14 +1,8 @@
-import { Node } from "../../../lib/node";
-import { getLangFromTitle } from "../../../lib/lang";
+import { Hono } from "hono";
+import { Env } from "$lib/env";
+import { getLangFromTitle } from "$lib/lang";
 import z from "zod";
-import { config } from "dotenv";
-import { Logger } from "tslog";
-
-const logger = new Logger({
-  name: "show",
-  type: "pretty",
-  hideLogPositionForProduction: true,
-});
+import { env } from "hono/adapter";
 
 const querySchema = z.object({
   season: z.coerce.number().min(1),
@@ -39,25 +33,28 @@ const subtitleSchema = z.object({
 
 const baseUrl = "https://api.betaseries.com";
 
-config();
+const tvdb = new Hono<{ Bindings: Env }>();
 
-export default defineEventHandler(async (event) => {
-  const node = new Node(event);
-  const rawQuery = getQuery(event);
-
+tvdb.get("/:tvdb", async (c) => {
+  const rawQuery = c.req.query();
   let query: z.infer<typeof querySchema>;
+  const { BETASERIES_API_KEY, CACHE_MAX_AGE } = env(c);
+
   try {
     query = querySchema.parse(rawQuery);
-  } catch (error) {
-    return node.prepareResponse({
-      status: 400,
-      error: "Bad Request",
-      message: error.message,
-    });
+  } catch (error: any) {
+    return c.json(
+      {
+        status: 400,
+        error: "Bad Request",
+        message: error.message,
+      },
+      400
+    );
   }
 
   // Get Episode IDs
-  const tvdb = getRouterParam(event, "tvdb");
+  const tvdb = c.req.param("tvdb");
   const { season, episode, lang } = query;
 
   let episodesUrl = new URL(`${baseUrl}/shows/episodes`);
@@ -71,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
   const response = await fetch(episodesUrl.toString(), {
     headers: {
-      "X-BetaSeries-Key": process.env.BETASERIES_API_KEY,
+      "X-BetaSeries-Key": BETASERIES_API_KEY,
     },
   });
 
@@ -79,20 +76,26 @@ export default defineEventHandler(async (event) => {
   try {
     episodeSchema.parse(data);
   } catch (error) {
-    return node.prepareResponse({
-      status: 404,
-      error: "Not Found",
-      message: "Episode not found.",
-    });
+    return c.json(
+      {
+        status: 404,
+        error: "Not Found",
+        message: "Episode not found.",
+      },
+      404
+    );
   }
 
   const { episodes }: z.infer<typeof episodeSchema> = data;
   if (episodes.length === 0) {
-    return node.prepareResponse({
-      status: 404,
-      error: "Not Found",
-      message: "Episode not found.",
-    });
+    return c.json(
+      {
+        status: 404,
+        error: "Not Found",
+        message: "Episode not found.",
+      },
+      404
+    );
   }
 
   const episodeId = episodes[0].id;
@@ -103,7 +106,7 @@ export default defineEventHandler(async (event) => {
 
   const subtitlesResponse = await fetch(subtitlesUrl.toString(), {
     headers: {
-      "X-BetaSeries-Key": process.env.BETASERIES_API_KEY,
+      "X-BetaSeries-Key": BETASERIES_API_KEY,
     },
   });
 
@@ -113,15 +116,24 @@ export default defineEventHandler(async (event) => {
   try {
     subtitleSchema.parse(subtitlesData);
   } catch (error) {
-    return node.prepareResponse({
-      status: 404,
-      error: "Not Found",
-      message: "Subtitles not found.",
-    });
+    return c.json(
+      {
+        status: 404,
+        error: "Not Found",
+        message: "Subtitles not found.",
+      },
+      404
+    );
   }
 
   const rawSubtitles = subtitlesData.subtitles;
-  let subtitles = rawSubtitles.map((subtitle) => {
+  let subtitles: {
+    lang: {
+      code: string;
+      name: string;
+    } | null;
+    url: string;
+  }[] = rawSubtitles.map((subtitle) => {
     const { file, url } = subtitle;
     const lang = getLangFromTitle(file);
     return {
@@ -136,17 +148,17 @@ export default defineEventHandler(async (event) => {
   // Remove subtitles with duplicate languages
   const langs = new Set();
   subtitles = subtitles.filter((subtitle) => {
+    if (!subtitle.lang) return false;
     if (langs.has(subtitle.lang.code)) return false;
     langs.add(subtitle.lang.code);
     return true;
   });
 
-  logger.info(
-    `Found ${subtitles.length} subtitles for ${tvdb} S${season}E${episode}`
-  );
-
-  return node.prepareResponse({
+  c.header("Cache-Control", `public, max-age=${CACHE_MAX_AGE || 86400}`);
+  return c.json({
     count: subtitles.length,
     subtitles,
   });
 });
+
+export default tvdb;

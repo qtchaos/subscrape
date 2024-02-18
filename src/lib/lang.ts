@@ -1,7 +1,7 @@
 import ISO6391 from "iso-639-1";
 
 // Custom codes for languages that don't have an ISO 639-1 code.
-const customCodes = {
+const customCodes: { [key: string]: string } = {
   Persian: "fa",
   "Chinese Simplified": "zh-Hans", // Hans is the ISO 15924 code for Simplified Chinese
   "Chinese Traditional": "zh-Hant", // Hant is the ISO 15924 code for Traditional Chinese
@@ -10,7 +10,7 @@ const customCodes = {
 };
 
 // Custom names that might be more familiar to users.
-const customNames = {
+const customNames: { [key: string]: string } = {
   "Chinese BG code": "Chinese Simplified", // GBK is a character encoding
   "Big 5 code": "Chinese Traditional", // Big 5 is a character encoding used mostly in Taiwan, Hong Kong and Macau
   "Brazillian Portuguese": "Brazilian Portuguese",
@@ -36,7 +36,7 @@ export function getLangFromTitle(title: string): {
 } | null {
   let split = title.split(".");
   split = split.slice(0, split.length - 1);
-  let lang: string;
+  let lang: string | undefined;
 
   if (split.includes("C")) {
     lang = split[split.indexOf("C") - 1];

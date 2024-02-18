@@ -1,3 +1,15 @@
 {
-  "extends": "./.nitro/types/tsconfig.json"
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "target": "es2021",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsxImportSource": "hono/jsx",
+    "baseUrl": "./src",
+    "resolveJsonModule": true,
+    "paths": {
+      "$lib/*": ["lib/*"]
+    }
+  }
 }

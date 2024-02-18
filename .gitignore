@@ -1,7 +1,3 @@
 node_modules
-*.log*
-.nitro
-.cache
-.output
+legacy
 .env
-dist
