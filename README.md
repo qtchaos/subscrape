@@ -1,4 +1,4 @@
-# YifySubtitles
+# SubScrape
 
 Scrapes subtitles from various sites for both movies and tv shows.
 
