@@ -1,17 +1,16 @@
+import { Hono } from "hono";
+
 import * as cheerio from "cheerio";
-import { Logger } from "tslog";
 import z from "zod";
-import { getCode, getName } from "../../../lib/lang";
-import { Node } from "../../../lib/node";
-import { Subtitle, RatedSubtitle } from "../../../lib/types";
+import { getCode, getName } from "$lib/lang";
+import { RatedSubtitle, Subtitle } from "$lib/types";
+
+import { Env } from "$lib/env";
+import { env } from "hono/adapter";
+
+const imdb = new Hono<{ Bindings: Env }>();
 
 const baseUrls = ["https://yts-subs.org", "https://yifysubtitles.ch"];
-
-const logger = new Logger({
-  name: "imdb",
-  type: "pretty",
-  hideLogPositionForProduction: true,
-});
 
 const imdbSchema = z.string().regex(/tt\d{7}/);
 const querySchema = z.object({
@@ -19,37 +18,55 @@ const querySchema = z.object({
   lang: z.string().optional(),
 });
 
-type Query = z.infer<typeof querySchema>;
+imdb.get("/:imdb", async (c) => {
+  let query: z.infer<typeof querySchema> = {};
+  const { CACHE_MAX_AGE } = env(c);
 
-export default defineEventHandler(async (event) => {
-  const node = new Node(event);
-  const rawQuery: Query = getQuery(event);
-  let query: Query;
+  if (c.req.query("rating")) {
+    try {
+      querySchema.parse(c.req.query("rating"));
+    } catch (error: any) {
+      return c.json(
+        {
+          status: 400,
+          error: "Bad Request",
+          message: `Error parsing rating: ${error.message}`,
+        },
+        400
+      );
+    }
 
-  try {
-    query = querySchema.parse(rawQuery);
-  } catch (error) {
-    logger.error(`${error.message}`);
-    const zodError = JSON.parse(error.message)[0];
-
-    return node.prepareResponse({
-      status: 400,
-      error: "Bad Request",
-      message: `Error parsing ${zodError.path[0]}: ${zodError.message}`,
-    });
+    query = { ...query, rating: Number(c.req.query("rating")) };
   }
 
-  const imdb = getRouterParam(event, "imdb");
+  if (c.req.query("lang")) {
+    try {
+      querySchema.parse(c.req.query("lang"));
+    } catch (error: any) {
+      return c.json(
+        {
+          status: 400,
+          error: "Bad Request",
+          message: `Error parsing lang: ${error.message}`,
+        },
+        400
+      );
+    }
+    query = { ...query, lang: c.req.query("lang") };
+  }
+
+  const imdb = c.req.param("imdb");
   try {
     imdbSchema.parse(imdb);
-  } catch (error) {
-    logger.error(`${error.message}`);
-
-    return node.prepareResponse({
-      status: 400,
-      error: "Bad Request",
-      message: "Invalid IMDB ID",
-    });
+  } catch (error: any) {
+    return c.json(
+      {
+        status: 400,
+        error: "Bad Request",
+        message: "Invalid IMDB ID",
+      },
+      400
+    );
   }
 
   const chosenBaseUrl = baseUrls[Math.floor(Math.random() * baseUrls.length)];
@@ -59,21 +76,21 @@ export default defineEventHandler(async (event) => {
   const $ = cheerio.load(await yifyPage.text());
   const subtitleLinks = $("tbody").find("tr");
   if (!subtitleLinks.length || subtitleLinks.length === 0) {
-    logger.warn(`No subtitles found for ${imdb}`);
-
-    return node.prepareResponse({
-      status: 404,
-      error: "Not Found",
-      message: "No subtitles found",
-    });
+    return c.json(
+      {
+        status: 404,
+        error: "Not Found",
+        message: "No subtitles found",
+      },
+      404
+    );
   }
 
   let ratedSubtitles: RatedSubtitle[] = subtitleLinks
     .map((_, el) => {
-      const url = `https://yifysubtitles.ch${$(el)
-        .find("a")
-        .attr("href")
-        .replace("subtitles", "subtitle")}.zip`;
+      const url = `https://yifysubtitles.ch${
+        $(el).find("a").attr("href") ?? "".replace("subtitles", "subtitle")
+      }.zip`;
       const name = getName($(el).find(".sub-lang").text());
       const code = getCode(name);
       const rating = Number($(el).find(".rating-cell").find("span").text());
@@ -91,7 +108,7 @@ export default defineEventHandler(async (event) => {
 
   if (query.rating) {
     ratedSubtitles = ratedSubtitles.filter(
-      (subtitle) => subtitle.rating >= query.rating
+      (subtitle) => subtitle.rating >= Number(query.rating) // stupid typescript, we dont actually NEED to cast this to a number
     );
   }
 
@@ -122,9 +139,11 @@ export default defineEventHandler(async (event) => {
     return false;
   });
 
-  logger.info(`Found ${subtitles.length} subtitles for ${imdb}`);
-  return node.prepareResponse({
+  c.header("Cache-Control", `max-age=${CACHE_MAX_AGE || 86400}`);
+  return c.json({
     count: subtitles.length,
     subtitles,
   });
 });
+
+export default imdb;

@@ -36,11 +36,11 @@ Some of the languages that are available on the website are not ISO 639-1 compli
 Keep in mind that the ISO 639-1 compliant Chinese `zh` language code is also supported in addition to the above two.
 Some non ISO 639-1 compliant languages, dialects, scripts or encodings might not be added yet, if you encounter one, please open an issue or pull request.
 
-## Series Specification
+## Show Specification
 
-- `/api/series/imdb/<imdb_id>` - Converts IMDb data key to TVDb id and redirects you along with the query parameters.
-- `/api/series/tmdb/<tmdb_id>` - Converts TMDb id to IMDb data key and redirects you along with the query parameters.
-- `/api/series/tvdb/<tmdb_id>` - Scrapes subtitles using a TVDb id
+- `/api/show/imdb/<imdb_id>` - Converts IMDb data key to TVDb id and redirects you along with the query parameters.
+- `/api/show/tmdb/<tmdb_id>` - Converts TMDb id to IMDb data key and redirects you along with the query parameters.
+- `/api/show/tvdb/<tmdb_id>` - Scrapes subtitles using a TVDb id
 
 All of these routes return the same success response, which is a list of subtitles with the following format:
 
