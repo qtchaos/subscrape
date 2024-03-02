@@ -2,7 +2,9 @@
   "name": "subscrape",
   "version": "1.0.0",
   "scripts": {
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node16 --minify=true --outdir=build",
+    "preview": "node build/index.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.8.2",
@@ -15,6 +17,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "esbuild": "^0.20.1",
     "tsx": "^3.14.0"
   }
 }

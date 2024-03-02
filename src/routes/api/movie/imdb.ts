@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import * as cheerio from "cheerio";
+import { load } from "cheerio";
 import z from "zod";
 import { getCode, getName } from "$lib/lang";
 import { RatedSubtitle, Subtitle } from "$lib/types";
@@ -73,7 +73,7 @@ imdb.get("/:imdb", async (c) => {
   const url = `${chosenBaseUrl}/movie-imdb/${imdb}`;
   const yifyPage = await fetch(url);
 
-  const $ = cheerio.load(await yifyPage.text());
+  const $ = load(await yifyPage.text());
   const subtitleLinks = $("tbody").find("tr");
   if (!subtitleLinks.length || subtitleLinks.length === 0) {
     return c.json(

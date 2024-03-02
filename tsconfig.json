@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "strict": true,
+    "noImplicitAny": true,
+    "removeComments": true,
     "jsx": "react-jsx",
     "target": "es2021",
     "module": "NodeNext",
