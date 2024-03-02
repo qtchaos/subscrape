@@ -88,9 +88,10 @@ imdb.get("/:imdb", async (c) => {
 
   let ratedSubtitles: RatedSubtitle[] = subtitleLinks
     .map((_, el) => {
-      const url = `https://yifysubtitles.ch${
-        $(el).find("a").attr("href") ?? "".replace("subtitles", "subtitle")
-      }.zip`;
+      const url = `https://yifysubtitles.ch${$(el)
+        .find("a")!
+        .attr("href")!
+        .replace("subtitles", "subtitle")}.zip`;
       const name = getName($(el).find(".sub-lang").text());
       const code = getCode(name);
       const rating = Number($(el).find(".rating-cell").find("span").text());
